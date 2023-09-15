@@ -33,7 +33,7 @@ export async function checkIfDocumentNeedsUpdate(
     addUserMessage(`Old document: ${document.text}`),
   ];
 
-  const planningResponse = await createAnswer(planningMessages, null);
+  const planningResponse = await createAnswer(planningMessages, null, 0.0);
 
   const planningMessage = planningResponse?.choices[0]?.message;
 
@@ -46,10 +46,11 @@ export async function checkIfDocumentNeedsUpdate(
 
   actionMessages.push(addAIMessage(planningMessage.content));
 
-  const functionCallResponse = await createAnswer(actionMessages, [
-    getTool1(),
-    getTool2(),
-  ]);
+  const functionCallResponse = await createAnswer(
+    actionMessages,
+    [getTool1(), getTool2()],
+    0.0,
+  );
 
   const functionCallMessage = functionCallResponse.choices[0]?.message;
 

@@ -67,11 +67,13 @@ export async function createEmbedding(content: string) {
 export async function createAnswer(
   messages: BaseMessage[],
   tools: Tool[] | null,
+  temperature: number,
 ) {
+  console.log(temperature);
   const request: OpenAi.Chat.Completions.CompletionCreateParamsNonStreaming = {
     messages,
     model: "gpt-3.5-turbo-16k-0613",
-    temperature: 0.0,
+    temperature: temperature,
   };
 
   if (tools) {
