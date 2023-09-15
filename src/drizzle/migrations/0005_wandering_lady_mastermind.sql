@@ -1,0 +1,1 @@
+ALTER TABLE "document" ADD COLUMN "updated" boolean DEFAULT false NOT NULL;
