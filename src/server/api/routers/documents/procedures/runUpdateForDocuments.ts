@@ -35,6 +35,7 @@ export const runUpdateForDocumentsProcedure = publicProcedure
       // search for similar documents
       const searchResponse = await searchSimilarEmbeddingsInQdrant(
         updatedDocument.embedding,
+        true,
       );
 
       const similarDocuments = await trx

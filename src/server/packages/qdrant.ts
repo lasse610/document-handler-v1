@@ -20,21 +20,37 @@ export async function uploadEmbeddingToQdrant(
   });
 }
 
-export async function searchSimilarEmbeddingsInQdrant(vector: number[]) {
+export async function searchSimilarEmbeddingsInQdrant(
+  vector: number[],
+  includeOnlyDestinationDocuments: boolean,
+) {
   const topK = 10;
+
+  const filter = includeOnlyDestinationDocuments
+    ? {
+        must: [
+          {
+            key: "documentType",
+            match: {
+              value: "destination",
+            },
+          },
+        ],
+      }
+    : {
+        must_not: [
+          {
+            key: "documentType",
+            match: {
+              value: "source",
+            },
+          },
+        ],
+      };
   const searchResponse = await qdrant.search(qdrantCollectionName, {
     vector: vector,
     limit: topK,
-    filter: {
-      must_not: [
-        {
-          key: "documentType",
-          match: {
-            value: "source",
-          },
-        },
-      ],
-    },
+    filter: filter,
   });
 
   return searchResponse;
