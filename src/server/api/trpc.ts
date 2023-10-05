@@ -9,11 +9,15 @@
 
 import { initTRPC, TRPCError } from "@trpc/server";
 import { type CreateNextContextOptions } from "@trpc/server/adapters/next";
+import { NodeHTTPCreateContextFnOptions } from "@trpc/server/dist/adapters/node-http";
+import { IncomingMessage } from "http";
+import type ws from "ws";
+import { getSession } from "next-auth/react";
+
 import { type Session } from "next-auth";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
-import { getServerAuthSession } from "~/server/packages/auth";
 import { drizzle } from "~/server/packages/db";
 
 /**
@@ -38,12 +42,6 @@ interface CreateContextOptions {
  *
  * @see https://create.t3.gg/en/usage/trpc#-serverapitrpcts
  */
-const createInnerTRPCContext = (opts: CreateContextOptions) => {
-  return {
-    session: opts.session,
-    drizzle,
-  };
-};
 
 /**
  * This is the actual context you will use in your router. It will be used to process every request
@@ -51,15 +49,18 @@ const createInnerTRPCContext = (opts: CreateContextOptions) => {
  *
  * @see https://trpc.io/docs/context
  */
-export const createTRPCContext = async (opts: CreateNextContextOptions) => {
-  const { req, res } = opts;
-
+export const createTRPCContext = async (
+  opts:
+    | CreateNextContextOptions
+    | NodeHTTPCreateContextFnOptions<IncomingMessage, ws>,
+) => {
   // Get the session from the server using the getServerSession wrapper function
-  const session = await getServerAuthSession({ req, res });
+  const session = await getSession(opts);
 
-  return createInnerTRPCContext({
+  return {
+    drizzle,
     session,
-  });
+  };
 };
 
 /**

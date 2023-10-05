@@ -64,6 +64,13 @@ function DocumentList(props: DocumentListProps) {
     undefined,
   );
 
+  function onResultModalClose(open: boolean) {
+    setResultModalIsOpen(open);
+    setResult([]);
+    runUpdateMutation.reset();
+    void context.documents.invalidate();
+  }
+
   const { documentType } = props;
 
   const context = api.useContext();
@@ -215,11 +222,14 @@ function DocumentList(props: DocumentListProps) {
           })}
         </ul>
       )}
-      <ResultModal
-        objects={result}
-        open={resutlModalIsOpen}
-        closeModal={setResultModalIsOpen}
-      />
+      {documentType === DocumentType.Source && (
+        <ResultModal
+          objects={result}
+          open={resutlModalIsOpen}
+          closeModal={onResultModalClose}
+        />
+      )}
+
       <Modal
         open={modalIsOpen}
         setIsModalOpen={setIsModalOpen}

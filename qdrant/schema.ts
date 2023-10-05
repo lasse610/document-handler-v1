@@ -3,7 +3,7 @@ import { QdrantClient } from "@qdrant/js-client-rest";
 async function main() {
   const client = new QdrantClient({ url: "http://localhost:6333" });
   const collectionName = "document-handler-test-collection";
-  /*
+
   console.log("Deleting collection");
   await client.deleteCollection(collectionName);
   console.log("Creating collection");
@@ -27,7 +27,6 @@ async function main() {
       with_vector: true,
     }),
   );
-  */
 
   console.log("Collection Info");
   console.log(await client.getCollection(collectionName));

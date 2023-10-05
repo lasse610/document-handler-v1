@@ -22,13 +22,19 @@ import {
   ParagraphNode,
   LineBreakNode,
   TextNode,
+  LexicalEditor,
 } from "lexical";
 import { Fragment, useEffect, useState } from "react";
 import { type Document } from "~/drizzle";
 import { api } from "~/utils/api";
-import { DocumentUpdateResponse } from "~/types";
+import { type DocumentUpdateResponse } from "~/types";
 import { InsNode } from "./nodes/insNode";
 import { DelNode } from "./nodes/delNode";
+import { CustomTextNode } from "./nodes/textNode";
+import { CustomParagraphNode } from "./nodes/paragraphNode";
+import { CustomListItemNode, CustomListNode } from "./nodes/listNode";
+import { CustomHeadingNode } from "./nodes/headingNode";
+import mergeConsecutiveHTMLTags from "./utils/mergeConsecutiveHtmlTags";
 
 type InitialConfig = Parameters<typeof LexicalComposer>["0"]["initialConfig"];
 
@@ -37,14 +43,40 @@ export function ResultModal(props: {
   open: boolean;
   closeModal: (open: boolean) => void;
 }) {
-  const { open, closeModal, objects } = props;
+  const { open, closeModal } = props;
+  const [forceOpen, setForceOpen] = useState(false);
+  const [res, setRes] = useState<DocumentUpdateResponse[]>([]);
   const [index, setIndex] = useState(0);
   const saveDocumentMutation = api.documents.saveOrUpdateDocument.useMutation();
+  api.documents.nextTokenSubscription.useSubscription(undefined, {
+    onData: (data) => {
+      if (props.objects.length !== 0) {
+        return;
+      }
 
-  useEffect(() => {
-    setIndex(0);
-  }, [objects]);
+      if (data) {
+        console.log("Setting force open");
+        console.log(forceOpen);
+        setForceOpen(true);
+      }
+      const index = res.findIndex(
+        (doc) => doc.document.id === data.document.id,
+      );
+      console.log(res);
+      if (index !== -1) {
+        const newRes = [...res];
+        newRes[index] = data;
+        console.log(res);
+        setRes(newRes);
+        return;
+      } else {
+        setRes((prev) => [...prev, data]);
+        return;
+      }
+    },
+  });
 
+  const objects = props.objects.length !== 0 ? props.objects : res;
   const object = objects[index];
 
   function handleNext() {
@@ -53,6 +85,13 @@ export function ResultModal(props: {
 
   function handlePrevious() {
     setIndex((prev) => (prev - 1 >= 0 ? prev - 1 : prev));
+  }
+
+  function handleClose() {
+    setForceOpen(false);
+    setIndex(0);
+    setRes([]);
+    closeModal(false);
   }
 
   function handleSave(html: string) {
@@ -72,8 +111,8 @@ export function ResultModal(props: {
   }
 
   return (
-    <Transition.Root show={open} as={Fragment}>
-      <Dialog as="div" className="relative z-10" onClose={closeModal}>
+    <Transition.Root show={open || forceOpen} as={Fragment}>
+      <Dialog as="div" className="relative z-10" onClose={handleClose}>
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-300"
@@ -110,7 +149,8 @@ export function ResultModal(props: {
                 <div className="flex flex-col items-center justify-center gap-4">
                   <div>
                     <p>
-                      {index + 1} of {objects.length}
+                      {index + 1} of{" "}
+                      {objects.length !== 0 ? objects.length : res.length}
                     </p>
                   </div>
                   <h1 className="text-2xl font-bold">
@@ -170,6 +210,41 @@ export function Editor(props: {
     TableCellNode,
     TableNode,
     TableRowNode,
+    CustomTextNode,
+    CustomParagraphNode,
+    CustomListNode,
+    CustomListItemNode,
+    CustomHeadingNode,
+    {
+      replace: TextNode,
+      with: (node: TextNode) => {
+        return new CustomTextNode(node.getTextContent());
+      },
+    },
+    {
+      replace: ParagraphNode,
+      with: (node: ParagraphNode) => {
+        return new CustomParagraphNode();
+      },
+    },
+    {
+      replace: ListNode,
+      with: (node: ListNode) => {
+        return new CustomListNode(node.__listType, node.__start);
+      },
+    },
+    {
+      replace: ListItemNode,
+      with: (node: ListItemNode) => {
+        return new CustomListItemNode(node.__value, node.__checked);
+      },
+    },
+    {
+      replace: HeadingNode,
+      with: (node: HeadingNode) => {
+        return new CustomHeadingNode(node.__tag);
+      },
+    },
   ];
   const initialConfig: InitialConfig = {
     namespace: "MyEditor",
@@ -204,43 +279,42 @@ function EditorObject(props: {
       editor.update(() => {
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, "text/html");
-        console.log(doc);
-        const nodes = $generateNodesFromDOM(editor, doc);
+        const unfilteredNodes = $generateNodesFromDOM(editor, doc);
+        const nodes = unfilteredNodes.filter(
+          (node) =>
+            node.__type !== "text" &&
+            node.__type !== "ins" &&
+            node.__type !== "del",
+        );
         if (nodes) {
-          console.log(nodes);
-          $getRoot().select();
-          $insertNodes(nodes);
+          try {
+            $getRoot().clear();
+            $getRoot().select();
+            $insertNodes(nodes);
+          } catch (e) {
+            console.log("Error inserting nodes");
+            console.log(e);
+            throw e;
+          }
         }
       });
     }
-    editor.update(() => {
-      // clear root
-      $getRoot().clear();
-      // In the browser you can use the native DOMParser API to parse the HTML string.
+    if (props.newText) {
+      htmlToLexicalNodes(props.newText);
+      return;
+    }
 
-      // Once you have the DOM instance it's easy to generate LexicalNodes.
+    if (document?.text) {
+      // Select the root
 
-      console.log("Inserting nodes");
-      if (props.newText) {
-        $getRoot().select();
-
-        htmlToLexicalNodes(props.newText);
-        return;
-      }
-
-      if (document?.text) {
-        // Select the root
-        $getRoot().select();
-
-        // Insert them at a selection.
-        htmlToLexicalNodes(document.text);
-      }
-    });
+      // Insert them at a selection.
+      htmlToLexicalNodes(document.text);
+    }
   }, [document, editor, props.newText]);
 
   function handleSave() {
     editor.update(() => {
-      const newText = $generateHtmlFromNodes(editor, null);
+      const newText = generateHtmlFromNodes(editor);
       console.log(document);
       props.onSave(newText);
     });
@@ -313,13 +387,22 @@ function EditorObject(props: {
       console.log(text);
     });
   }
+  function generateHtmlFromNodes(editor: LexicalEditor) {
+    const html = $generateHtmlFromNodes(editor, null);
+    const dom = new DOMParser().parseFromString(html, "text/html");
+    mergeConsecutiveHTMLTags(dom.body);
+    return dom.body.innerHTML;
+  }
 
   function exportDomAsHtml() {
     editor.update(() => {
-      const html = $generateHtmlFromNodes(editor, null);
+      const json = editor.getEditorState();
+      console.log(json);
+      const html = generateHtmlFromNodes(editor);
       console.log(html);
     });
   }
+
   /*
   function importContent() {
     editor.update(() => {
@@ -363,15 +446,15 @@ function EditorObject(props: {
           //<button onClick={importContent}>Import Content</button>
         }
       </div>
-      {/*
-      <button
-        onClick={() => exportDomAsHtml()}
-        type="button"
-        className="rounded-full bg-indigo-600 px-2.5 py-1 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-      >
-        Print Html
-      </button>
-      */}
+      {
+        <button
+          onClick={() => exportDomAsHtml()}
+          type="button"
+          className="rounded-full bg-indigo-600 px-2.5 py-1 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+        >
+          Print Html
+        </button>
+      }
       <button
         onClick={handleSave}
         type="button"

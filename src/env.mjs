@@ -32,6 +32,8 @@ export const env = createEnv({
    * `NEXT_PUBLIC_`.
    */
   client: {
+    NEXT_PUBLIC_WS_URL: z.string().url().min(1),
+    NEXT_PUBLIC_APP_URL: z.string().url().min(1),
     // NEXT_PUBLIC_CLIENTVAR: z.string().min(1),
   },
 
@@ -48,7 +50,10 @@ export const env = createEnv({
     MICROSOFT_CLIENT_ID: process.env.MICROSOFT_CLIENT_ID,
     MICROSOFT_CLIENT_SECRET: process.env.MICROSOFT_CLIENT_SECRET,
     MICROSOFT_TENANT_ID: process.env.MICROSOFT_TENANT_ID,
+    NEXT_PUBLIC_WS_URL: process.env.NEXT_PUBLIC_WS_URL,
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
   },
+
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation.
    * This is especially useful for Docker builds.

@@ -7,8 +7,9 @@ import {
   SerializedLexicalNode,
   SerializedTextNode,
 } from "lexical";
+import { CustomTextNode } from "./textNode";
 
-export class InsNode extends TextNode {
+export class InsNode extends CustomTextNode {
   constructor(text: string, key?: NodeKey) {
     super(text, key);
     super.setStyle("background-color: green");
@@ -17,7 +18,6 @@ export class InsNode extends TextNode {
   static importDOM(): DOMConversionMap | null {
     return {
       ins: (element) => {
-        console.log("ins importDOM");
         return {
           conversion: convertInsNodeFn,
           priority: 3,
@@ -28,6 +28,16 @@ export class InsNode extends TextNode {
 
   static getType(): string {
     return "ins";
+  }
+
+  static importJSON(serializedNode: SerializedTextNode) {
+    const node = super.importJSON(serializedNode);
+    return node;
+  }
+
+  exportJSON(): SerializedTextNode {
+    const node = super.exportJSON();
+    return node;
   }
 
   static clone(node: InsNode): InsNode {

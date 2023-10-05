@@ -3,14 +3,15 @@ import { Editor } from "../components/editor/editor";
 import htmlDiff from "node-htmldiff";
 
 export default function Home() {
-  const source = "<ul><li>test</li><li>test</li></ul>";
-  const target = "<h1>Moi</h1>";
+  const source = "<h1><strong>moi<strong></h1>";
+  const target =
+    "<h1><strong>hellou <i>italic</i></strong><strong>moi</strong></h1><p><strong>hellou </strong><strong>moi</strong></p>";
   const diff = htmlDiff(source, target);
   console.log(diff);
   const document: Document = {
     id: "1",
     title: "test",
-    text: "<ul><li>test</li><li>test</li></ul>",
+    text: "<p>Kakka</p>",
     createdAt: new Date(),
     updatedAt: new Date(),
     embedding: [1],

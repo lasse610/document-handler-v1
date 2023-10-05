@@ -1,10 +1,6 @@
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { type GetServerSidePropsContext } from "next";
-import {
-  getServerSession,
-  type DefaultSession,
-  type NextAuthOptions,
-} from "next-auth";
+import { type DefaultSession, type NextAuthOptions } from "next-auth";
 import DiscordProvider from "next-auth/providers/discord";
 
 import { env } from "~/env.mjs";
@@ -65,9 +61,3 @@ export const authOptions: NextAuthOptions = {
  *
  * @see https://next-auth.js.org/configuration/nextjs
  */
-export const getServerAuthSession = (ctx: {
-  req: GetServerSidePropsContext["req"];
-  res: GetServerSidePropsContext["res"];
-}) => {
-  return getServerSession(ctx.req, ctx.res, authOptions);
-};

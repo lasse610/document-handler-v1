@@ -7,8 +7,9 @@ import {
   SerializedLexicalNode,
   SerializedTextNode,
 } from "lexical";
+import { CustomTextNode } from "./textNode";
 
-export class DelNode extends TextNode {
+export class DelNode extends CustomTextNode {
   constructor(text: string, key?: NodeKey) {
     super(text, key);
     super.setStyle("background-color: red");
@@ -17,13 +18,22 @@ export class DelNode extends TextNode {
   static importDOM(): DOMConversionMap | null {
     return {
       del: (element) => {
-        console.log("del importDOM");
         return {
           conversion: convertDelNodeFn,
           priority: 3,
         };
       },
     };
+  }
+
+  static importJSON(serializedNode: SerializedTextNode) {
+    const node = super.importJSON(serializedNode);
+    return node;
+  }
+
+  exportJSON(): SerializedTextNode {
+    const node = super.exportJSON();
+    return node;
   }
 
   static getType(): string {

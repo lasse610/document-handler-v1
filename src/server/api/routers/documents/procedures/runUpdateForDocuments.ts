@@ -30,12 +30,10 @@ export const runUpdateForDocumentsProcedure = publicProcedure
         });
       }
 
-      const baselineText = updatedDocument.text;
-
       // search for similar documents
       const searchResponse = await searchSimilarEmbeddingsInQdrant(
         updatedDocument.embedding,
-        true,
+        false,
       );
 
       const similarDocuments = await trx
@@ -45,12 +43,10 @@ export const runUpdateForDocumentsProcedure = publicProcedure
           or(...searchResponse.map((s) => eq(documents.id, s.id.toString()))),
         )
         .execute();
-
-      const resArray = await Promise.all(
-        similarDocuments.map((document) =>
-          checkIfDocumentNeedsUpdate(baselineText, document),
-        ),
+      const promises = similarDocuments.map((document) =>
+        checkIfDocumentNeedsUpdate(updatedDocument, document),
       );
+      const resArray = await Promise.all(promises);
 
       const updatedDocuments = resArray.filter(
         (res) => res.type === UpdateStatus.Updated,
