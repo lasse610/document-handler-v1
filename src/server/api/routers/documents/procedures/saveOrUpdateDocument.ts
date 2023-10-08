@@ -9,7 +9,7 @@ import {
   UpdateSharepointFile,
   UploadSharepointFile,
   initMicrosoftGraphClient,
-} from "~/server/packages/sharepoint";
+} from "~/server/packages/sharepoint/graphApi";
 import { publicProcedure } from "../../../trpc";
 import {
   updateEmbeddingInQdrant,
@@ -62,7 +62,7 @@ export const saveOrUpdateDocumentProcedure = publicProcedure
 
         // Document type is sharepoint
         if (updatedDocument.type === "sharepoint") {
-          const client = initMicrosoftGraphClient();
+          const { client } = await initMicrosoftGraphClient();
 
           const sharepointDocument = (
             await trx
@@ -81,7 +81,7 @@ export const saveOrUpdateDocumentProcedure = publicProcedure
             sharepointDocument.sharepointId,
           );
           const referenceFileDownloadUrl =
-            referenceFile["@microsoft.graph.downloadUrl"];
+            referenceFile["@microsoft.graph.downloadUrl"]!;
           const success = await DownloadSharepointFileAndWriteToDisk(
             referenceFileDownloadUrl,
             `${refrenceDocPath}${sharepointDocument.fileName}`,
@@ -147,7 +147,7 @@ export const saveOrUpdateDocumentProcedure = publicProcedure
         );
 
         if (input.type === "sharepoint") {
-          const client = initMicrosoftGraphClient();
+          const { client } = await initMicrosoftGraphClient();
           const escapedName = newDocument.title.replace(/ /g, "\\ ");
           // Convert new html to docx
           // Command line args need escaped spaces

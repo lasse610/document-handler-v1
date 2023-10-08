@@ -4,7 +4,7 @@ import {
   DownloadSharepointFile,
   GetSharepointFileInfos,
   initMicrosoftGraphClient,
-} from "~/server/packages/sharepoint";
+} from "~/server/packages/sharepoint/graphApi";
 import { excecutePandoc } from "~/server/packages/pandoc";
 import { eq } from "drizzle-orm";
 import { createEmbedding } from "~/server/packages/openAI";
@@ -33,6 +33,8 @@ export const sharepointRouter = createTRPCRouter({
         const driveId = file.parentReference?.driveId;
         const siteId = file.parentReference?.siteId;
         const downloadUrl = file["@microsoft.graph.downloadUrl"];
+        if (!downloadUrl) return;
+
         const response = await DownloadSharepointFile(downloadUrl);
 
         if (

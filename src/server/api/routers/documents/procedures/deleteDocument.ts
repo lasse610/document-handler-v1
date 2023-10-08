@@ -7,7 +7,7 @@ import { deleteEmbeddingFromQdrant } from "~/server/packages/qdrant";
 import {
   DeleteSharepointFile,
   initMicrosoftGraphClient,
-} from "~/server/packages/sharepoint";
+} from "~/server/packages/sharepoint/graphApi";
 
 export const deleteDocumentProcedure = publicProcedure
   .input(z.object({ id: z.string().uuid() }))
@@ -31,7 +31,7 @@ export const deleteDocumentProcedure = publicProcedure
       await deleteEmbeddingFromQdrant(deletedFile.id);
 
       if (deletedFile.type === "sharepoint") {
-        const client = initMicrosoftGraphClient();
+        const { client } = await initMicrosoftGraphClient();
         const deletedSharepointEntry = (
           await trx
             .delete(sharepointDocuments)

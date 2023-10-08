@@ -78,6 +78,76 @@
       "when": 1694636665854,
       "tag": "0010_tan_miss_america",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "5",
+      "when": 1696613083893,
+      "tag": "0011_flippant_thanos",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "5",
+      "when": 1696613166974,
+      "tag": "0012_narrow_lockheed",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "5",
+      "when": 1696680453744,
+      "tag": "0013_tan_charles_xavier",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "5",
+      "when": 1696680661599,
+      "tag": "0014_curly_ricochet",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "5",
+      "when": 1696682695865,
+      "tag": "0015_eager_king_cobra",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "5",
+      "when": 1696686627105,
+      "tag": "0016_milky_skin",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "5",
+      "when": 1696687771039,
+      "tag": "0017_skinny_nicolaos",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "5",
+      "when": 1696764633221,
+      "tag": "0018_fair_corsair",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "5",
+      "when": 1696765377271,
+      "tag": "0019_conscious_violations",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "5",
+      "when": 1696777451996,
+      "tag": "0020_parched_paibok",
+      "breakpoints": true
     }
   ]
 }
