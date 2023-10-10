@@ -23,7 +23,7 @@ import {
   ParagraphNode,
 } from "lexical";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
-import { Editor, ResultModal } from "./components/editor/editor";
+import { Editor, ResultModal } from "./components/editor/editableEditor";
 import { type Document } from "~/drizzle/index";
 import {
   DocumentType,

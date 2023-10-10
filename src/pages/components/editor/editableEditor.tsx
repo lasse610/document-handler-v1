@@ -29,7 +29,7 @@ import { type Document } from "~/drizzle";
 import { api } from "~/utils/api";
 import { type DocumentUpdateResponse } from "~/types";
 import { InsNode } from "./nodes/insNode";
-import { DelNode } from "./nodes/delNode";
+import { InvisibleDelNode } from "./nodes/delNode";
 import { CustomTextNode } from "./nodes/textNode";
 import { CustomParagraphNode } from "./nodes/paragraphNode";
 import { CustomListItemNode, CustomListNode } from "./nodes/listNode";
@@ -199,7 +199,7 @@ export function Editor(props: {
   onSave: (html: string) => void;
 }) {
   const nodes = [
-    DelNode,
+    InvisibleDelNode,
     InsNode,
     AutoLinkNode,
     LinkNode,

@@ -1,5 +1,5 @@
 import { Document } from "~/drizzle";
-import { Editor } from "../components/editor/editor";
+import { Editor } from "../components/editor/editableEditor";
 import htmlDiff from "node-htmldiff";
 
 export default function Home() {

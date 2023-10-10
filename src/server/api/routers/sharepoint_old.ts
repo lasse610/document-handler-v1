@@ -15,7 +15,7 @@ import {
 
 export const sharepointRouter = createTRPCRouter({
   downloadFiles: publicProcedure.mutation(async ({ ctx }) => {
-    const client = initMicrosoftGraphClient();
+    const { client } = await initMicrosoftGraphClient();
 
     const allSharepointDocuments = await ctx.drizzle
       .select()

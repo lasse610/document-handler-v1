@@ -15,6 +15,7 @@ import {
   initMicrosoftGraphClient,
 } from "./packages/sharepoint/graphApi";
 import { createNewDbSharepointFile } from "./packages/sharepoint/helpers";
+import ee from "./eventEmitter";
 
 interface SubscriptionRequest extends MicrosoftGraphTypes.Subscription {
   subscriptionId: string;
@@ -125,13 +126,14 @@ webhookRouter.post("/webhook", (async (req: SomeHandlerRequest, res) => {
               .where(eq(dbSharepointFiles.itemId, itemId))
               .execute()
           )[0];
-
+          // Check if file is new
           if (!dbFile) {
+            // check if file is deleted before indexing
             if (file.deleted?.state === "deleted") {
               console.log("file deleted before indexing");
               continue;
             }
-
+            // create new file
             const newDbFile = await createNewDbSharepointFile(
               client,
               drive,
@@ -142,7 +144,16 @@ webhookRouter.post("/webhook", (async (req: SomeHandlerRequest, res) => {
               console.log("file not created. It is probably deleted");
               continue;
             }
+            // insert update into change table
+
+            // insert into database
             await trx.insert(dbSharepointFiles).values(newDbFile).execute();
+            await trx.insert(sharepointFileChanges).values({
+              changeType: "created",
+              itemId: newDbFile.itemId,
+              newContent: newDbFile.content,
+            });
+            ee.emit("fileChange");
 
             continue;
           }
@@ -173,18 +184,18 @@ webhookRouter.post("/webhook", (async (req: SomeHandlerRequest, res) => {
             continue;
           }
 
+          await trx
+            .update(dbSharepointFiles)
+            .set({ ...newDbFile, updatedAt: new Date() })
+            .where(eq(dbSharepointFiles.itemId, dbFile.itemId))
+            .execute();
           await trx.insert(sharepointFileChanges).values({
             changeType: "updated",
             itemId: dbFile.itemId,
             oldContent: dbFile.content,
             newContent: newDbFile.content,
           });
-
-          await trx
-            .update(dbSharepointFiles)
-            .set({ ...newDbFile, updatedAt: new Date(), updated: true })
-            .where(eq(dbSharepointFiles.itemId, dbFile.itemId))
-            .execute();
+          ee.emit("fileChange");
         }
       } catch (error) {
         console.error(error);

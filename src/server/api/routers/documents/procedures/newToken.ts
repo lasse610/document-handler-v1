@@ -2,18 +2,8 @@ import { publicProcedure } from "~/server/api/trpc";
 import { observable } from "@trpc/server/observable";
 import { type Document } from "~/drizzle";
 import ee from "~/server/eventEmitter";
-import { Subject, interval } from "rxjs";
-import {
-  debounce,
-  mergeMap,
-  buffer,
-  filter,
-  groupBy,
-  takeUntil,
-  auditTime,
-  bufferTime,
-  debounceTime,
-} from "rxjs/operators";
+import { Subject } from "rxjs";
+import { mergeMap, groupBy, auditTime } from "rxjs/operators";
 
 export const nextTokenSubscription = publicProcedure.subscription(() => {
   return observable<{ document: Document; changes: string }>((emit) => {

@@ -134,7 +134,6 @@ export const dbSharepointFiles = pgTable("sharepointFile", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().notNull(),
   embedding: json("embedding").$type<number[]>().notNull(),
-  updated: boolean("updated").default(false).notNull(),
   cTag: text("cTag").notNull(),
   content: text("content").notNull(),
 });

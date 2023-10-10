@@ -1,4 +1,6 @@
+import { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 import { type Document } from "~/drizzle";
+import { AppRouter } from "./server/api/root";
 
 export enum UpdateStatus {
   Updated = "updated",
@@ -35,3 +37,9 @@ export enum DocumentType {
   Destination = "destination",
   Sharepoint = "sharepoint",
 }
+
+type RouterInput = inferRouterInputs<AppRouter>;
+type RouterOutput = inferRouterOutputs<AppRouter>;
+
+export type GetFileChangesOutput =
+  RouterOutput["fileChanges"]["getFileChanges"];
