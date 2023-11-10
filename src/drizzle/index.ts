@@ -126,7 +126,8 @@ export const dbSharepointDrives = pgTable(
 export type DBSharepointDrive = typeof dbSharepointDrives.$inferSelect;
 
 export const dbSharepointFiles = pgTable("sharepointFile", {
-  itemId: text("itemId").notNull().primaryKey(),
+  id: uuid("id").notNull().defaultRandom().primaryKey(),
+  itemId: text("itemId").notNull().unique(),
   name: text("name").notNull(),
   sharepointDriveId: uuid("sharepointDriveId")
     .notNull()
@@ -139,6 +140,7 @@ export const dbSharepointFiles = pgTable("sharepointFile", {
 });
 
 export type NewDBSharepointFile = typeof dbSharepointFiles.$inferInsert;
+export type DBSharepointFile = typeof dbSharepointFiles.$inferSelect;
 
 export const dbSharepointSubscription = pgTable("sharepointSubscription", {
   id: uuid("id").notNull().primaryKey(),
@@ -159,9 +161,9 @@ export const fileChangeType = pgEnum("file_change_type", [
 
 export const sharepointFileChanges = pgTable("sharepointFileChange", {
   id: uuid("id").notNull().defaultRandom().primaryKey(),
-  itemId: text("itemId")
+  dbSharepointFileId: uuid("dbSharepointFileId")
     .notNull()
-    .references(() => dbSharepointFiles.itemId, { onDelete: "cascade" }),
+    .references(() => dbSharepointFiles.id, { onDelete: "cascade" }),
   processed: boolean("processed").default(false).notNull(),
   changeType: fileChangeType("changeType").notNull(),
   createdAt: timestamp("time").notNull().defaultNow(),

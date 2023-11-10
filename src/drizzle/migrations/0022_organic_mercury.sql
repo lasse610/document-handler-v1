@@ -1,1 +1,0 @@
-ALTER TABLE "sharepointFile" DROP COLUMN IF EXISTS "updated";

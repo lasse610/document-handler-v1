@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import {
   dbSharepointDrives,
   dbSharepointFiles,
@@ -13,13 +13,13 @@ export const getFileChangesProcedure = publicProcedure.query(
       .from(sharepointFileChanges)
       .innerJoin(
         dbSharepointFiles,
-        eq(sharepointFileChanges.itemId, dbSharepointFiles.itemId),
+        eq(sharepointFileChanges.dbSharepointFileId, dbSharepointFiles.id),
       )
       .innerJoin(
         dbSharepointDrives,
         eq(dbSharepointFiles.sharepointDriveId, dbSharepointDrives.id),
       )
-      .orderBy(sharepointFileChanges.createdAt)
+      .orderBy(desc(sharepointFileChanges.createdAt))
       .execute();
 
     return changes;

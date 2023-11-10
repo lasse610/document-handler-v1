@@ -4,8 +4,6 @@ import {
   initMicrosoftGraphClient,
 } from "~/server/packages/sharepoint/graphApi";
 import { publicProcedure } from "../../../trpc";
-import * as z from "zod";
-import { type Drive } from "@microsoft/microsoft-graph-types";
 import { dbSharepointDrives } from "~/drizzle";
 
 export const getSharepointSitesProcedure = publicProcedure.query(

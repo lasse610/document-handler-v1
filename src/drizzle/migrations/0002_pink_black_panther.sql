@@ -1,0 +1,1 @@
+ALTER TABLE "sharepointFile" ADD CONSTRAINT "sharepointFile_itemId_unique" UNIQUE("itemId");

@@ -5,7 +5,7 @@ import { z } from "zod";
 import { documents } from "~/drizzle";
 import { publicProcedure } from "~/server/api/trpc";
 import { searchSimilarEmbeddingsInQdrant } from "~/server/packages/qdrant";
-import { checkIfDocumentNeedsUpdate } from "../helpers/llm";
+import { checkIfDocumentNeedsUpdate_deprecated } from "../helpers/llm";
 import { UpdateStatus, type UpdatedResponse } from "~/types";
 import htmlDiff from "node-htmldiff";
 
@@ -33,7 +33,6 @@ export const runUpdateForDocumentsProcedure = publicProcedure
       // search for similar documents
       const searchResponse = await searchSimilarEmbeddingsInQdrant(
         updatedDocument.embedding,
-        false,
       );
 
       const similarDocuments = await trx
@@ -44,7 +43,7 @@ export const runUpdateForDocumentsProcedure = publicProcedure
         )
         .execute();
       const promises = similarDocuments.map((document) =>
-        checkIfDocumentNeedsUpdate(updatedDocument, document),
+        checkIfDocumentNeedsUpdate_deprecated(updatedDocument, document),
       );
       const resArray = await Promise.all(promises);
 

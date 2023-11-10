@@ -1,1 +1,0 @@
-ALTER TABLE "sharepointDrive" ADD COLUMN "deltaLink" text;

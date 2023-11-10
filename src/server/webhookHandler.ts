@@ -16,6 +16,11 @@ import {
 } from "./packages/sharepoint/graphApi";
 import { createNewDbSharepointFile } from "./packages/sharepoint/helpers";
 import ee from "./eventEmitter";
+import {
+  deleteEmbeddingFromQdrant,
+  updateEmbeddingInQdrant,
+  uploadEmbeddingToQdrant,
+} from "./packages/qdrant";
 
 interface SubscriptionRequest extends MicrosoftGraphTypes.Subscription {
   subscriptionId: string;
@@ -147,13 +152,25 @@ webhookRouter.post("/webhook", (async (req: SomeHandlerRequest, res) => {
             // insert update into change table
 
             // insert into database
-            await trx.insert(dbSharepointFiles).values(newDbFile).execute();
+            const insertedFile = (
+              await trx
+                .insert(dbSharepointFiles)
+                .values(newDbFile)
+                .returning()
+                .execute()
+            )[0];
+
+            if (!insertedFile) {
+              throw new Error("Failed to insert file");
+            }
+            // upload embedding to qdrant
+            await uploadEmbeddingToQdrant(insertedFile.id, newDbFile.embedding);
+
             await trx.insert(sharepointFileChanges).values({
               changeType: "created",
-              itemId: newDbFile.itemId,
+              dbSharepointFileId: insertedFile.id,
               newContent: newDbFile.content,
             });
-            ee.emit("fileChange");
 
             continue;
           }
@@ -161,8 +178,10 @@ webhookRouter.post("/webhook", (async (req: SomeHandlerRequest, res) => {
           if (file.deleted?.state === "deleted") {
             await trx
               .delete(dbSharepointFiles)
-              .where(eq(dbSharepointFiles.itemId, dbFile.itemId))
+              .where(eq(dbSharepointFiles.id, dbFile.id))
               .execute();
+            // delete embedding from qdrant
+            await deleteEmbeddingFromQdrant(dbFile.id);
             continue;
           }
 
@@ -189,19 +208,22 @@ webhookRouter.post("/webhook", (async (req: SomeHandlerRequest, res) => {
             .set({ ...newDbFile, updatedAt: new Date() })
             .where(eq(dbSharepointFiles.itemId, dbFile.itemId))
             .execute();
+          // update embedding in qdrant
+          await updateEmbeddingInQdrant(dbFile.id, newDbFile.embedding);
+
           await trx.insert(sharepointFileChanges).values({
             changeType: "updated",
-            itemId: dbFile.itemId,
+            dbSharepointFileId: dbFile.id,
             oldContent: dbFile.content,
             newContent: newDbFile.content,
           });
-          ee.emit("fileChange");
         }
       } catch (error) {
         console.error(error);
         throw error;
       }
     });
+    ee.emit("fileChange");
   }
   console.log("done");
 }) as RequestHandler);

@@ -14,20 +14,15 @@ import { ListItemNode, ListNode } from "@lexical/list";
 import { OverflowNode } from "@lexical/overflow";
 import { HeadingNode } from "@lexical/rich-text";
 import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
-import { $generateHtmlFromNodes, $generateNodesFromDOM } from "@lexical/html";
-import {
-  $getRoot,
-  $insertNodes,
-  type LexicalNode,
-  ParagraphNode,
-  LineBreakNode,
-  TextNode,
-  LexicalEditor,
-} from "lexical";
-import { Fragment, useEffect, useState } from "react";
-import { type Document } from "~/drizzle";
+import { $generateHtmlFromNodes } from "@lexical/html";
+import * as lexical from "lexical";
+import { Dispatch, Fragment, SetStateAction, useEffect, useState } from "react";
+import { type DBSharepointFile } from "~/drizzle";
 import { api } from "~/utils/api";
-import { type DocumentUpdateResponse } from "~/types";
+import {
+  type RunUpdateResponseTemporary,
+  type RunUpdateFinishedResponse,
+} from "~/types";
 import { InsNode } from "./nodes/insNode";
 import { InvisibleDelNode } from "./nodes/delNode";
 import { CustomTextNode } from "./nodes/textNode";
@@ -35,48 +30,27 @@ import { CustomParagraphNode } from "./nodes/paragraphNode";
 import { CustomListItemNode, CustomListNode } from "./nodes/listNode";
 import { CustomHeadingNode } from "./nodes/headingNode";
 import mergeConsecutiveHTMLTags from "./utils/mergeConsecutiveHtmlTags";
+import { htmlToLexicalNodes } from "./utils/htmlToLexicalNodes";
+import { AutoFocusPlugin } from "./plugins/autoFocusPlugin";
+import { LoadingSpinner } from "../loadingSpinner/loadingSpinner";
 
-type InitialConfig = Parameters<typeof LexicalComposer>["0"]["initialConfig"];
+type InitialConfig = Parameters<
+  typeof LexicalComposer
+>[number]["initialConfig"];
 
 export function ResultModal(props: {
-  objects: DocumentUpdateResponse[];
+  temporaryResult: RunUpdateResponseTemporary[];
+  updatedResult: RunUpdateFinishedResponse[];
+  setUpdatedResult: Dispatch<SetStateAction<RunUpdateFinishedResponse[]>>;
   open: boolean;
   closeModal: (open: boolean) => void;
 }) {
-  const { open, closeModal } = props;
+  const { open, closeModal, temporaryResult, updatedResult, setUpdatedResult } =
+    props;
   const [forceOpen, setForceOpen] = useState(false);
-  const [res, setRes] = useState<DocumentUpdateResponse[]>([]);
   const [index, setIndex] = useState(0);
-  const saveDocumentMutation = api.documents.saveOrUpdateDocument.useMutation();
-  api.documents.nextTokenSubscription.useSubscription(undefined, {
-    onData: (data) => {
-      if (props.objects.length !== 0) {
-        return;
-      }
 
-      if (data) {
-        console.log("Setting force open");
-        console.log(forceOpen);
-        setForceOpen(true);
-      }
-      const index = res.findIndex(
-        (doc) => doc.document.id === data.document.id,
-      );
-      console.log(res);
-      if (index !== -1) {
-        const newRes = [...res];
-        newRes[index] = data;
-        console.log(res);
-        setRes(newRes);
-        return;
-      } else {
-        setRes((prev) => [...prev, data]);
-        return;
-      }
-    },
-  });
-
-  const objects = props.objects.length !== 0 ? props.objects : res;
+  const objects = updatedResult.length !== 0 ? updatedResult : temporaryResult;
   const object = objects[index];
 
   function handleNext() {
@@ -90,22 +64,37 @@ export function ResultModal(props: {
   function handleClose() {
     setForceOpen(false);
     setIndex(0);
-    setRes([]);
     closeModal(false);
   }
 
-  function handleSave(html: string) {
+  const saveDocumentMutation = api.sharepoint.updateSharepointFile.useMutation({
+    onSuccess: (data) => {
+      // Toggle saved flag to true
+      const index = updatedResult.findIndex(
+        (doc) => doc.document.itemId === data.itemId,
+      );
+      if (index !== -1) {
+        const newRes = [...updatedResult];
+        const obj = newRes[index];
+        if (obj) {
+          newRes[index] = { ...obj, saved: true };
+          setUpdatedResult(newRes);
+          return;
+        }
+      }
+    },
+  });
+
+  function onSave(html: string, savedObject: RunUpdateFinishedResponse) {
     console.log("Saving");
-    const document = objects[index]?.document;
+    const document = savedObject.document;
     console.log(document);
     console.log(html);
     if (document) {
       console.log("Saving");
       saveDocumentMutation.mutate({
-        id: document.id,
-        text: html,
-        type: document.type,
-        title: document.title,
+        itemId: document.itemId,
+        content: html,
       });
     }
   }
@@ -149,18 +138,18 @@ export function ResultModal(props: {
                 <div className="flex flex-col items-center justify-center gap-4">
                   <div>
                     <p>
-                      {index + 1} of{" "}
-                      {objects.length !== 0 ? objects.length : res.length}
+                      {index + 1} of {objects.length === 0 ? 0 : objects.length}
                     </p>
                   </div>
                   <h1 className="text-2xl font-bold">
-                    {object?.document.title ?? "invalid index"}
+                    {object?.document.name ?? "invalid index"}
                   </h1>
                   <Editor
-                    newText={object?.changes}
-                    document={object?.document}
-                    onSave={handleSave}
+                    onSave={onSave}
+                    resObject={object}
+                    isLoading={saveDocumentMutation.isLoading}
                   />
+
                   <div className="flex flex-row gap-2">
                     <button
                       onClick={handlePrevious}
@@ -194,9 +183,9 @@ export function ResultModal(props: {
 }
 
 export function Editor(props: {
-  newText?: string;
-  document: Document | undefined;
-  onSave: (html: string) => void;
+  onSave: (html: string, savedObject: RunUpdateFinishedResponse) => void;
+  resObject: RunUpdateFinishedResponse | RunUpdateResponseTemporary | undefined;
+  isLoading: boolean;
 }) {
   const nodes = [
     InvisibleDelNode,
@@ -216,14 +205,14 @@ export function Editor(props: {
     CustomListItemNode,
     CustomHeadingNode,
     {
-      replace: TextNode,
-      with: (node: TextNode) => {
+      replace: lexical.TextNode,
+      with: (node: lexical.TextNode) => {
         return new CustomTextNode(node.getTextContent());
       },
     },
     {
-      replace: ParagraphNode,
-      with: (node: ParagraphNode) => {
+      replace: lexical.ParagraphNode,
+      with: (_node: lexical.ParagraphNode) => {
         return new CustomParagraphNode();
       },
     },
@@ -258,136 +247,50 @@ export function Editor(props: {
   return (
     <LexicalComposer initialConfig={initialConfig}>
       <EditorObject
-        newText={props.newText}
-        document={props.document}
+        resObject={props.resObject}
         onSave={props.onSave}
+        isLoading={props.isLoading}
       />
     </LexicalComposer>
   );
 }
 
 function EditorObject(props: {
-  newText: string | undefined;
-  document: Document | undefined;
-  onSave: (html: string) => void;
+  isLoading: boolean;
+  resObject: RunUpdateFinishedResponse | RunUpdateResponseTemporary | undefined;
+  onSave: (html: string, savedObject: RunUpdateFinishedResponse) => void;
 }) {
   const [editor] = useLexicalComposerContext();
-  const { document } = props;
+  const { resObject, onSave, isLoading } = props;
 
   useEffect(() => {
-    function htmlToLexicalNodes(html: string) {
-      editor.update(() => {
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, "text/html");
-        const unfilteredNodes = $generateNodesFromDOM(editor, doc);
-        const nodes = unfilteredNodes.filter(
-          (node) =>
-            node.__type !== "text" &&
-            node.__type !== "ins" &&
-            node.__type !== "del",
-        );
-        if (nodes) {
-          try {
-            $getRoot().clear();
-            $getRoot().select();
-            $insertNodes(nodes);
-          } catch (e) {
-            console.log("Error inserting nodes");
-            console.log(e);
-            throw e;
-          }
-        }
-      });
-    }
-    if (props.newText) {
-      htmlToLexicalNodes(props.newText);
+    if (resObject?.changes) {
+      htmlToLexicalNodes(editor, resObject.changes);
       return;
     }
 
-    if (document?.text) {
+    if (resObject?.document.content) {
       // Select the root
 
       // Insert them at a selection.
-      htmlToLexicalNodes(document.text);
+      htmlToLexicalNodes(editor, resObject.document.content);
     }
-  }, [document, editor, props.newText]);
+  }, [editor, resObject]);
 
   function handleSave() {
     editor.update(() => {
       const newText = generateHtmlFromNodes(editor);
-      console.log(document);
-      props.onSave(newText);
-    });
-  }
-
-  function changeObjectToLexicalNodes(
-    changes: Diff.Change[],
-    added: boolean,
-  ): LexicalNode[] {
-    const paragraph = new ParagraphNode();
-
-    const children: LexicalNode[] = [];
-
-    if (typeof window === "undefined") {
-      return [paragraph];
-    }
-    for (const change of changes) {
-      for (const [i, line] of change.value.split("\n").entries()) {
-        if (i !== 0) {
-          const child: LineBreakNode = new LineBreakNode();
-          children.push(child);
-        }
-
-        //const value = document.createElement("p");
-        if (change.added) {
-          if (added) {
-            const child = new TextNode(line);
-            child.setStyle("background-color: green");
-            children.push(child);
-          }
-
-          continue;
-        }
-        if (change.removed) {
-          if (!added) {
-            const child = new TextNode(line);
-            child.setStyle("background-color: red");
-            children.push(child);
-          }
-          continue;
-        }
-        const child = new TextNode(line);
-        children.push(child);
+      if (resObject?.type === "updated") {
+        onSave(newText, resObject);
       }
-    }
-    // convert html to string
-    paragraph.append(...children);
-    return [paragraph];
+    });
   }
 
   // Catch any errors that occur during Lexical updates and log them
   // or throw them as needed. If you don't throw them, Lexical will
   // try to recover gracefully without losing user data.
 
-  function exportDom() {
-    /*
-    editor.update(() => {
-      const html = $generateHtmlFromNodes(editor, null);
-      console.log(html);
-    });
-    */
-    const state = editor.getEditorState();
-    return state.toJSON();
-  }
-
-  function exportDomAsText() {
-    editor.update(() => {
-      const root = $getRoot();
-      const text = root.getTextContent();
-      console.log(text);
-    });
-  }
-  function generateHtmlFromNodes(editor: LexicalEditor) {
+  function generateHtmlFromNodes(editor: lexical.LexicalEditor) {
     const html = $generateHtmlFromNodes(editor, null);
     const dom = new DOMParser().parseFromString(html, "text/html");
     mergeConsecutiveHTMLTags(dom.body);
@@ -403,26 +306,6 @@ function EditorObject(props: {
     });
   }
 
-  /*
-  function importContent() {
-    editor.update(() => {
-      // In the browser you can use the native DOMParser API to parse the HTML string.
-
-      // Once you have the DOM instance it's easy to generate LexicalNodes.
-      $getRoot().clear();
-
-      // Select the root
-
-      // Insert them at a selection.
-      if (diff) {
-        $getRoot().select();
-
-        $insertNodes(changeObjectToLexicalNodes(diff, true));
-      }
-    });
-  }
-  */
-
   return (
     <div className="flex w-full flex-col items-center justify-center gap-y-10 ">
       <div className="w-3/4">
@@ -437,42 +320,52 @@ function EditorObject(props: {
             ErrorBoundary={LexicalErrorBoundary}
           />
           <HistoryPlugin />
-          <MyCustomAutoFocusPlugin />
+          <AutoFocusPlugin />
         </div>
-        {
-          //<button onClick={exportDom}>Export Dom</button>
-        }
-        {
-          //<button onClick={importContent}>Import Content</button>
-        }
       </div>
-      {
+
+      {resObject?.type === "updated" && (
         <button
-          onClick={() => exportDomAsHtml()}
+          onClick={() => handleSave()}
+          disabled={resObject?.saved}
           type="button"
-          className="rounded-full bg-indigo-600 px-2.5 py-1 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+          className={`rounded-full ${
+            resObject?.saved
+              ? "bg-green-600"
+              : "bg-indigo-600 hover:bg-indigo-500 focus-visible:outline-indigo-600"
+          }  px-2.5 py-1 text-sm font-semibold text-white shadow-sm  focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 `}
         >
-          Print Html
+          {resObject.saved ? (
+            <span className="flex items-center gap-2">
+              Saved <CheckIcon />
+            </span>
+          ) : (
+            <span className="flex items-center gap-2">
+              Save {isLoading && <LoadingSpinner />}
+            </span>
+          )}
         </button>
-      }
-      <button
-        onClick={handleSave}
-        type="button"
-        className="rounded-full bg-indigo-600 px-2.5 py-1 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-      >
-        Save
-      </button>
+      )}
+      {resObject?.type !== "updated" && <div>Generating</div>}
     </div>
   );
 }
 
-function MyCustomAutoFocusPlugin() {
-  const [editor] = useLexicalComposerContext();
-
-  useEffect(() => {
-    // Focus the editor when the effect fires!
-    editor.focus();
-  }, [editor]);
-
-  return null;
+export function CheckIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+      stroke="currentColor"
+      className="h-6 w-6"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+      />
+    </svg>
+  );
 }

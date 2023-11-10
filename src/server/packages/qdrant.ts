@@ -3,18 +3,13 @@ import { QdrantClient } from "@qdrant/js-client-rest";
 const qdrantCollectionName = "document-handler-test-collection";
 const qdrant = new QdrantClient({ url: "http://localhost:6333" });
 
-export async function uploadEmbeddingToQdrant(
-  id: string,
-  vector: number[],
-  documentType: string,
-) {
+export async function uploadEmbeddingToQdrant(id: string, vector: number[]) {
   // Upload Embedding to Qdrant
   await qdrant.upsert(qdrantCollectionName, {
     points: [
       {
         id,
         vector,
-        payload: { documentType },
       },
     ],
   });
@@ -22,38 +17,16 @@ export async function uploadEmbeddingToQdrant(
 
 export async function searchSimilarEmbeddingsInQdrant(
   vector: number[],
-  includeOnlyDestinationDocuments: boolean,
+  ownId: string,
 ) {
-  const topK = 10;
+  const topK = 5;
 
-  const filter = includeOnlyDestinationDocuments
-    ? {
-        must: [
-          {
-            key: "documentType",
-            match: {
-              value: "destination",
-            },
-          },
-        ],
-      }
-    : {
-        must_not: [
-          {
-            key: "documentType",
-            match: {
-              value: "source",
-            },
-          },
-        ],
-      };
   const searchResponse = await qdrant.search(qdrantCollectionName, {
     vector: vector,
     limit: topK,
-    filter: filter,
+    filter: {},
   });
-
-  return searchResponse;
+  return searchResponse.filter((s) => s.id !== ownId);
 }
 
 export async function updateEmbeddingInQdrant(id: string, vector: number[]) {

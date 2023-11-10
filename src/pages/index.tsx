@@ -30,7 +30,9 @@ import {
   OperationType,
   type CompletionResponse,
   DocumentUpdateResponse,
+  type DocumentUpdateResponseWithSavedFlag,
 } from "~/types";
+import htmlDiff from "node-htmldiff";
 
 export default function Home() {
   return (
@@ -55,7 +57,9 @@ interface DocumentListProps {
 
 function DocumentList(props: DocumentListProps) {
   const [modalIsOpen, setModalIsOpen] = useState(false);
-  const [result, setResult] = useState<DocumentUpdateResponse[]>([]);
+  const [result, setResult] = useState<DocumentUpdateResponseWithSavedFlag[]>(
+    [],
+  );
   const [resutlModalIsOpen, setResultModalIsOpen] = useState(false);
   const [operationType, setOperationType] = useState<OperationType>(
     OperationType.Modify,
@@ -83,7 +87,7 @@ function DocumentList(props: DocumentListProps) {
   const runUpdateMutation = api.documents.runUpdateForDocuments.useMutation({
     onSuccess: (data) => {
       console.log(data);
-      setResult(data);
+      setResult(data.map((item) => ({ ...item, saved: false })));
       setResultModalIsOpen(true);
     },
   });

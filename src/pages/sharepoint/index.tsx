@@ -2,11 +2,11 @@ import { api } from "~/utils/api";
 
 export default function Sharepoint() {
   const context = api.useContext();
-  const sites = api.sharepoint.sites.useQuery(undefined, {
+  const sites = api.sharepoint.getAllSyncedSites.useQuery(undefined, {
     staleTime: Infinity,
   });
 
-  const updateSitesMutation = api.sharepoint.update.useMutation({
+  const updateSitesMutation = api.sharepoint.updateSyncedSites.useMutation({
     onSuccess: async () => {
       await context.sharepoint.invalidate(undefined);
     },
@@ -23,7 +23,7 @@ export default function Sharepoint() {
     );
     if (site === undefined) return;
 
-    context.sharepoint.sites.setData(undefined, (prev) => {
+    context.sharepoint.getAllSyncedSites.setData(undefined, (prev) => {
       return prev?.map((prevSite) => {
         if (prevSite.siteId === siteId && prevSite.driveId === driveId) {
           return {

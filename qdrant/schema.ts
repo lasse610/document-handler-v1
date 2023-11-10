@@ -14,12 +14,6 @@ async function main() {
     },
   });
 
-  await client.createPayloadIndex(collectionName, {
-    field_name: "documentType",
-    field_schema: "keyword",
-    wait: true,
-  });
-
   console.log(
     await client.retrieve(collectionName, {
       ids: ["e4dc87a1-4c22-4dff-b588-de087f828cfc"],

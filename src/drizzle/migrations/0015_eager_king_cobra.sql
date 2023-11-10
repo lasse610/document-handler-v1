@@ -1,1 +1,0 @@
-ALTER TABLE "sharepointFile" ALTER COLUMN "sharepointDriveId" SET NOT NULL;

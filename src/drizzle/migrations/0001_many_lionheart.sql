@@ -1,0 +1,1 @@
+ALTER TABLE "sharepointFileChange" ALTER COLUMN "dbSharepointFileId" SET DATA TYPE uuid;

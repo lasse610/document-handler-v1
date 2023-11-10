@@ -1,16 +1,16 @@
 {
   "version": "5",
   "dialect": "pg",
-  "id": "38e0c3fe-c5ba-4976-87d6-51c3d1618de8",
+  "id": "37d7cecb-c2fe-4c1f-bfc7-fc72950a0a10",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
-    "accounts": {
-      "name": "accounts",
+    "account": {
+      "name": "account",
       "schema": "",
       "columns": {
         "userId": {
           "name": "userId",
-          "type": "uuid",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
@@ -73,26 +73,14 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
-        },
-        "expires_in": {
-          "name": "expires_in",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "ext_expires_in": {
-          "name": "ext_expires_in",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
         }
       },
       "indexes": {},
       "foreignKeys": {
-        "accounts_userId_users_id_fk": {
-          "name": "accounts_userId_users_id_fk",
-          "tableFrom": "accounts",
-          "tableTo": "users",
+        "account_userId_user_id_fk": {
+          "name": "account_userId_user_id_fk",
+          "tableFrom": "account",
+          "tableTo": "user",
           "columnsFrom": [
             "userId"
           ],
@@ -104,8 +92,8 @@
         }
       },
       "compositePrimaryKeys": {
-        "accounts_provider_providerAccountId": {
-          "name": "accounts_provider_providerAccountId",
+        "account_provider_providerAccountId": {
+          "name": "account_provider_providerAccountId",
           "columns": [
             "provider",
             "providerAccountId"
@@ -114,8 +102,249 @@
       },
       "uniqueConstraints": {}
     },
-    "sessions": {
-      "name": "sessions",
+    "sharepointDrive": {
+      "name": "sharepointDrive",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "siteId": {
+          "name": "siteId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "siteName": {
+          "name": "siteName",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "driveId": {
+          "name": "driveId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "driveName": {
+          "name": "driveName",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "deltaLink": {
+          "name": "deltaLink",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "sharepointDrive_siteId_driveId_unique": {
+          "name": "sharepointDrive_siteId_driveId_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "siteId",
+            "driveId"
+          ]
+        }
+      }
+    },
+    "sharepointFile": {
+      "name": "sharepointFile",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "itemId": {
+          "name": "itemId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sharepointDriveId": {
+          "name": "sharepointDriveId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "embedding": {
+          "name": "embedding",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cTag": {
+          "name": "cTag",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "content": {
+          "name": "content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "sharepointFile_sharepointDriveId_sharepointDrive_id_fk": {
+          "name": "sharepointFile_sharepointDriveId_sharepointDrive_id_fk",
+          "tableFrom": "sharepointFile",
+          "tableTo": "sharepointDrive",
+          "columnsFrom": [
+            "sharepointDriveId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "sharepointSubscription": {
+      "name": "sharepointSubscription",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "dbDriveId": {
+          "name": "dbDriveId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expirationDateTime": {
+          "name": "expirationDateTime",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "sharepointSubscription_dbDriveId_sharepointDrive_id_fk": {
+          "name": "sharepointSubscription_dbDriveId_sharepointDrive_id_fk",
+          "tableFrom": "sharepointSubscription",
+          "tableTo": "sharepointDrive",
+          "columnsFrom": [
+            "dbDriveId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "document": {
+      "name": "document",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "type": {
+          "name": "type",
+          "type": "document_type",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "text": {
+          "name": "text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "embedding": {
+          "name": "embedding",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated": {
+          "name": "updated",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "session": {
+      "name": "session",
       "schema": "",
       "columns": {
         "sessionToken": {
@@ -126,7 +355,7 @@
         },
         "userId": {
           "name": "userId",
-          "type": "uuid",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
@@ -139,10 +368,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "sessions_userId_users_id_fk": {
-          "name": "sessions_userId_users_id_fk",
-          "tableFrom": "sessions",
-          "tableTo": "users",
+        "session_userId_user_id_fk": {
+          "name": "session_userId_user_id_fk",
+          "tableFrom": "session",
+          "tableTo": "user",
           "columnsFrom": [
             "userId"
           ],
@@ -156,8 +385,58 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {}
     },
-    "users": {
-      "name": "users",
+    "sharepointDocument": {
+      "name": "sharepointDocument",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "fileName": {
+          "name": "fileName",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sharepointId": {
+          "name": "sharepointId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "driveId": {
+          "name": "driveId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "siteId": {
+          "name": "siteId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "external_id": {
+          "name": "external_id",
+          "nullsNotDistinct": false,
+          "columns": [
+            "sharepointId",
+            "driveId",
+            "siteId"
+          ]
+        }
+      }
+    },
+    "sharepointFileChange": {
+      "name": "sharepointFileChange",
       "schema": "",
       "columns": {
         "id": {
@@ -166,6 +445,81 @@
           "primaryKey": true,
           "notNull": true,
           "default": "gen_random_uuid()"
+        },
+        "dbSharepointFileId": {
+          "name": "dbSharepointFileId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "processed": {
+          "name": "processed",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "changeType": {
+          "name": "changeType",
+          "type": "file_change_type",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "time": {
+          "name": "time",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "oldContent": {
+          "name": "oldContent",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "newContent": {
+          "name": "newContent",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "sharepointFileChange_dbSharepointFileId_sharepointFile_id_fk": {
+          "name": "sharepointFileChange_dbSharepointFileId_sharepointFile_id_fk",
+          "tableFrom": "sharepointFileChange",
+          "tableTo": "sharepointFile",
+          "columnsFrom": [
+            "dbSharepointFileId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "user": {
+      "name": "user",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
         },
         "name": {
           "name": "name",
@@ -234,7 +588,24 @@
       "uniqueConstraints": {}
     }
   },
-  "enums": {},
+  "enums": {
+    "document_type": {
+      "name": "document_type",
+      "values": {
+        "source": "source",
+        "destination": "destination",
+        "sharepoint": "sharepoint"
+      }
+    },
+    "file_change_type": {
+      "name": "file_change_type",
+      "values": {
+        "created": "created",
+        "updated": "updated",
+        "deleted": "deleted"
+      }
+    }
+  },
   "schemas": {},
   "_meta": {
     "schemas": {},

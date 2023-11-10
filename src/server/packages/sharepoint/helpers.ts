@@ -6,6 +6,8 @@ import {
   type DriveItemFile,
   DownloadSharepointFile,
 } from "./graphApi";
+import { createEmbedding } from "../openAI";
+import { uploadEmbeddingToQdrant } from "../qdrant";
 
 export async function createNewDbSharepointFile(
   client: Client,
@@ -61,7 +63,7 @@ export async function createNewDbSharepointFile(
   ]);
 
   // Create embedding
-  const embedding = [1]; //await createEmbedding(html);
+  const embedding = await createEmbedding(html);
 
   const sharepointFile: NewDBSharepointFile = {
     itemId: driveItem.id,

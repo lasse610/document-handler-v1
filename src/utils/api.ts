@@ -44,12 +44,6 @@ function getEndingLink(ctx: NextPageContext | undefined) {
   });
 }
 
-type RouterInput = inferRouterInputs<AppRouter>;
-type RouterOutput = inferRouterOutputs<AppRouter>;
-
-export type GetFileChangesOutput =
-  RouterOutput["fileChanges"]["getFileChanges"];
-
 /**
  * A set of strongly-typed React hooks from your `AppRouter` type signature with `createReactQueryHooks`.
  * @link https://trpc.io/docs/react#3-create-trpc-hooks

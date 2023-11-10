@@ -84,14 +84,16 @@ export async function GetSharepointFileInfos(client: Client) {
 export async function UpdateSharepointFile(
   client: Client,
   path: string,
-  fileId: string,
+  siteId: string,
+  driveId: string,
+  itemId: string,
 ) {
   const file = fs.readFileSync(path);
-  await client
-    .api(`/sites/${siteId}/drives/${driveId}/items/${fileId}/content`)
-    .put(file);
+  const response = (await client
+    .api(`/sites/${siteId}/drives/${driveId}/items/${itemId}/content`)
+    .put(file)) as DriveItemFile;
 
-  return true;
+  return response;
 }
 
 export async function UploadSharepointFile(

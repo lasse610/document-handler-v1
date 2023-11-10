@@ -20,6 +20,12 @@ import { excecutePandoc } from "~/server/packages/pandoc";
 const refrenceDocPath = "./data/reference/";
 const resultDocPath = "./data/result/";
 
+const siteId =
+  "4rkscv.sharepoint.com,02a94695-f4f7-44d5-b3d9-6aeefa128271,17c4a475-732d-41a7-8156-7317e88700c4";
+
+const driveId =
+  "b!lUapAvf01USz2Wru-hKCcXWkxBctc6dBgVZzF-iHAMRaiwR_Z8jHQJiP1Fie7yxZ";
+
 export const saveOrUpdateDocumentProcedure = publicProcedure
   .input(
     z.object({
@@ -104,6 +110,8 @@ export const saveOrUpdateDocumentProcedure = publicProcedure
           await UpdateSharepointFile(
             client,
             `${resultDocPath}${sharepointDocument.fileName}`,
+            siteId,
+            driveId,
             sharepointDocument.sharepointId,
           );
           return updatedDocument;
@@ -140,11 +148,7 @@ export const saveOrUpdateDocumentProcedure = publicProcedure
           });
         }
 
-        await uploadEmbeddingToQdrant(
-          newDocument.id,
-          validatedEmbedding,
-          input.type,
-        );
+        await uploadEmbeddingToQdrant(newDocument.id, validatedEmbedding);
 
         if (input.type === "sharepoint") {
           const { client } = await initMicrosoftGraphClient();

@@ -20,6 +20,10 @@ import {
 import { excecutePandoc } from "~/server/packages/pandoc";
 import { type Client } from "@microsoft/microsoft-graph-client";
 import { createNewDbSharepointFile } from "~/server/packages/sharepoint/helpers";
+import {
+  deleteEmbeddingFromQdrant,
+  uploadEmbeddingToQdrant,
+} from "~/server/packages/qdrant";
 
 export const updateSyncedSharepointSites = publicProcedure
   .input(
@@ -129,11 +133,23 @@ export const updateSyncedSharepointSites = publicProcedure
               continue;
             }
             // Insert into database
-            await trx
-              .insert(dbSharepointFiles)
-              .values(dbSharepointFile)
-              .onConflictDoNothing()
-              .execute();
+            const insertedFile = (
+              await trx
+                .insert(dbSharepointFiles)
+                .values(dbSharepointFile)
+                .returning()
+                .onConflictDoNothing()
+                .execute()
+            )[0];
+
+            if (!insertedFile) {
+              throw new Error("Failed to insert file");
+            }
+            // upload embedding
+            await uploadEmbeddingToQdrant(
+              insertedFile.id,
+              insertedFile.embedding,
+            );
           }
         }
       }
@@ -155,6 +171,22 @@ export const updateSyncedSharepointSites = publicProcedure
             ),
           )
           .execute();
+
+        const files = await trx
+          .select()
+          .from(dbSharepointFiles)
+          .where(
+            or(
+              ...dbDrives.map((driveObject) =>
+                eq(dbSharepointFiles.sharepointDriveId, driveObject.id),
+              ),
+            ),
+          )
+          .execute();
+        // delete embeddings
+        for (const file of files) {
+          await deleteEmbeddingFromQdrant(file.id);
+        }
         // fetch subscriptions for drives
         const subscriptions = await trx
           .delete(dbSharepointSubscription)
