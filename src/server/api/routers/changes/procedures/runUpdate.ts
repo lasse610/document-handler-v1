@@ -7,7 +7,7 @@ import { publicProcedure } from "~/server/api/trpc";
 import { searchSimilarEmbeddingsInQdrant } from "~/server/packages/qdrant";
 import { UpdateStatus, type UpdatedResponseV2 } from "~/types";
 import htmlDiff from "node-htmldiff";
-import { checkIfDocumentNeedsUpdate } from "../../documents/helpers/llm";
+import { checkIfDocumentNeedsUpdate } from "../helpers/llm";
 
 export const runUpdateForChangesProcedure = publicProcedure
   .input(z.object({ changeId: z.string().uuid() }))

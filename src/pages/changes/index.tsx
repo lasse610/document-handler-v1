@@ -103,7 +103,6 @@ function FileChangeListItem(props: { change: GetFileChangesOutput[number] }) {
     setResultModalIsOpen(open);
     setUpdatedResult([]);
     runUpdateMutation.reset();
-    void context.documents.invalidate();
   }
 
   return (

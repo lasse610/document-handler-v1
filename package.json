@@ -12,7 +12,7 @@
     "pull": "drizzle-kit introspect:pg",
     "lint": "next lint",
     "start": "next start",
-    "start-ngrok": "ngrok http 3002 --hostname=ready-usually-buzzard.ngrok-free.app",
+    "dev:start-ngrok": "ngrok http 3002 --hostname=ready-usually-buzzard.ngrok-free.app",
     "start-vector-database": "docker run -p 6333:6333 qdrant/qdrant",
     "apply-vector-database-migrations": "dotenv -- tsx ./qdrant/schema.ts"
   },
