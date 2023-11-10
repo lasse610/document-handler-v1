@@ -6,6 +6,8 @@ export const env = createEnv({
    * isn't built with invalid env vars.
    */
   server: {
+    MSWEBHOOK_SECRET_TOKEN: z.string().min(1),
+    WEBSERVER_ENDPOINT: z.string().min(1),
     DATABASE_URL: z.string().url(),
     OPENAI_API_KEY: z.string().min(1),
     NODE_ENV: z.enum(["development", "test", "production"]),
@@ -42,6 +44,8 @@ export const env = createEnv({
    * middlewares) or client-side so we need to destruct manually.
    */
   runtimeEnv: {
+    MSWEBHOOK_SECRET_TOKEN: process.env.MSWEBHOOK_SECRET_TOKEN,
+    WEBSERVER_ENDPOINT: process.env.WEBSERVER_ENDPOINT,
     DATABASE_URL: process.env.DATABASE_URL,
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     NODE_ENV: process.env.NODE_ENV,

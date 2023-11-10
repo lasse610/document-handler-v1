@@ -2,7 +2,12 @@ import { httpBatchLink } from "@trpc/client/links/httpBatchLink";
 import { loggerLink } from "@trpc/client/links/loggerLink";
 import { wsLink, createWSClient } from "@trpc/client/links/wsLink";
 import { createTRPCNext } from "@trpc/next";
-import { TRPCError, type inferProcedureOutput } from "@trpc/server";
+import {
+  TRPCError,
+  inferRouterInputs,
+  type inferProcedureOutput,
+  inferRouterOutputs,
+} from "@trpc/server";
 import { type NextPageContext } from "next";
 import type { AppRouter } from "../server/api/root";
 import superjson from "superjson";

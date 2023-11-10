@@ -107,3 +107,67 @@ export const sharepointDocumentsRelation = relations(
 export type SharepointDocument = typeof sharepointDocuments.$inferSelect;
 
 export type Document = typeof documents.$inferSelect;
+
+export const dbSharepointDrives = pgTable(
+  "sharepointDrive",
+  {
+    id: uuid("id").notNull().primaryKey().defaultRandom(),
+    siteId: text("siteId").notNull(),
+    siteName: text("siteName").notNull(),
+    driveId: text("driveId").notNull(),
+    driveName: text("driveName").notNull(),
+    deltaLink: text("deltaLink"),
+  },
+  (t) => ({
+    unq: unique().on(t.siteId, t.driveId),
+  }),
+);
+
+export type DBSharepointDrive = typeof dbSharepointDrives.$inferSelect;
+
+export const dbSharepointFiles = pgTable("sharepointFile", {
+  id: uuid("id").notNull().defaultRandom().primaryKey(),
+  itemId: text("itemId").notNull().unique(),
+  name: text("name").notNull(),
+  sharepointDriveId: uuid("sharepointDriveId")
+    .notNull()
+    .references(() => dbSharepointDrives.id, { onDelete: "cascade" }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+  embedding: json("embedding").$type<number[]>().notNull(),
+  cTag: text("cTag").notNull(),
+  content: text("content").notNull(),
+});
+
+export type NewDBSharepointFile = typeof dbSharepointFiles.$inferInsert;
+export type DBSharepointFile = typeof dbSharepointFiles.$inferSelect;
+
+export const dbSharepointSubscription = pgTable("sharepointSubscription", {
+  id: uuid("id").notNull().primaryKey(),
+  dbDriveId: uuid("dbDriveId")
+    .notNull()
+    .references(() => dbSharepointDrives.id, { onDelete: "cascade" }),
+  expirationDateTime: timestamp("expirationDateTime").notNull(),
+});
+
+export type DBSharepointSubscription =
+  typeof dbSharepointSubscription.$inferSelect;
+
+export const fileChangeType = pgEnum("file_change_type", [
+  "created",
+  "updated",
+  "deleted",
+]);
+
+export const sharepointFileChanges = pgTable("sharepointFileChange", {
+  id: uuid("id").notNull().defaultRandom().primaryKey(),
+  dbSharepointFileId: uuid("dbSharepointFileId")
+    .notNull()
+    .references(() => dbSharepointFiles.id, { onDelete: "cascade" }),
+  processed: boolean("processed").default(false).notNull(),
+  changeType: fileChangeType("changeType").notNull(),
+  createdAt: timestamp("time").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  oldContent: text("oldContent"),
+  newContent: text("newContent").notNull(),
+});

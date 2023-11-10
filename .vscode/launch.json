@@ -13,7 +13,7 @@
     {
       "type": "node-terminal",
       "request": "launch",
-      "name": "Debug Next",
+      "name": "Debug Next With Client",
       "skipFiles": ["<node_internals>/**"],
       "command": "pnpm run dev",
       "internalConsoleOptions": "neverOpen",
@@ -22,6 +22,14 @@
         "uriFormat": "%s",
         "action": "debugWithChrome"
       }
+    },
+    {
+      "type": "node-terminal",
+      "request": "launch",
+      "name": "Debug Next Without Client",
+      "skipFiles": ["<node_internals>/**"],
+      "command": "pnpm run dev",
+      "internalConsoleOptions": "neverOpen"
     }
   ]
 }

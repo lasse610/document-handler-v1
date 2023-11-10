@@ -1,1 +1,0 @@
-ALTER TABLE "document" ADD COLUMN "embedding" json NOT NULL;

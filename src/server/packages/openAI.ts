@@ -2,13 +2,13 @@ import { z } from "zod";
 import OpenAi from "openai";
 import { env } from "~/env.mjs";
 import { TRPCError } from "@trpc/server";
-import { Stream } from "openai/streaming";
-import { CompletionCreateParams } from "openai/resources";
+import { type Stream } from "openai/streaming";
 const openAi = new OpenAi({ apiKey: env.OPENAI_API_KEY });
 
 export interface BaseMessage {
-  role: "user" | "system" | "assistant";
+  role: "user" | "system" | "assistant" | "function";
   content: string;
+  name?: string;
 }
 
 export type Tool = OpenAi.Chat.Completions.CompletionCreateParams.Function;
@@ -30,6 +30,17 @@ export function addUserMessage(content: string): BaseMessage {
 export function addAIMessage(content: string): BaseMessage {
   return {
     role: "assistant",
+    content,
+  };
+}
+
+export function addFunctionMessage(
+  functionName: string,
+  content: string,
+): BaseMessage {
+  return {
+    role: "function",
+    name: functionName,
     content,
   };
 }
