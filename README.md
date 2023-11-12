@@ -11,4 +11,8 @@ pnpm run dev
 
 Make sure you have applied migrations before starting (both the qdrant vector database and postgres).
 
+Example images.
+
+
+
 
